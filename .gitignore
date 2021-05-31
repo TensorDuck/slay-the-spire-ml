@@ -1,0 +1,5 @@
+# temp files
+*.pyc
+
+# directories should not be saved
+data/
