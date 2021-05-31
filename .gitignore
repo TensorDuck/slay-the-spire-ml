@@ -3,3 +3,4 @@
 
 # directories should not be saved
 data/
+notebooks/
