@@ -28,14 +28,28 @@ def filter_records_by_character(records: list, character: str) -> list:
     return specific_records
 
 
+def filter_records_by_victory(records: list) -> list:
+    """Filter out records for a specific character"""
+    specific_records = []
+    for record in records:
+        if record["event"]["victory"]:
+            specific_records.append(record)
+
+    return specific_records
+
+
 def get_all_unique_cards(records: list) -> set:
     """Process multiple records and return a matrix of card counts"""
     all_cards = {}
     for dat in records:
-        character = dat["event"]["character_chosen"]
-        if character not in all_cards:
-            all_cards[character] = set()
-        all_cards[character] = all_cards[character].union(get_cards(dat))
+        character = dat.get("event").get("character_chosen")  # there are null records
+        if character is None:
+            print(dat)
+        else:
+            if character not in all_cards:
+                all_cards[character] = set()
+            all_cards[character] = all_cards[character].union(get_cards(dat))
+
     return all_cards
 
 
