@@ -5,7 +5,6 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.decomposition import NMF
 
-import slayer.preprocess as spre
 from slayer.globals import RESOURCE_LOCATION
 
 
@@ -33,15 +32,11 @@ class Converter:
         """Convert a deck array into a dictionary of card-names and counts"""
         return {self.all_cards[idx]: count for idx, count in enumerate(deck)}
 
-    def get_matrix(self, records: list):
-        """Get a reaction matrix for all cards in decks"""
-        specific_records = spre.filter_records_by_character(
-            records, self.character_name
-        )
+    def get_matrix(self, deck_list: list):
+        """Get a reaction matrix for all cards in a list of decks"""
         all_rows = []
-        for record in specific_records:
-            cards = np.array(spre.get_cards(record))
-            row = self.create_deck(cards)
+        for deck in deck_list:
+            row = self.create_deck(deck)
             all_rows.append(row)
 
         return np.stack(all_rows)
@@ -54,4 +49,3 @@ class Converter:
             self.matrix_factorizer.fit_transform(mat),
             self.matrix_factorizer.components_,
         )
-

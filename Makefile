@@ -1,4 +1,4 @@
-.PHONY: build, start, stop, dev-start, lint, gcp-upload, preprocess
+.PHONY: build, start, stop, dev-start, lint, gcp-upload, preprocess, train
 
 -include .env
 
@@ -26,3 +26,6 @@ lint:
 
 preprocess: build-dev
 	docker run --rm --name $(CONTAINER_NAME)_script -v $(PWD):/mnt -t $(CONTAINER_NAME):dev python /mnt/scripts/preprocess_good_decks.py
+
+train: build-dev
+	docker run --rm --name $(CONTAINER_NAME)_script -v $(PWD):/mnt -t $(CONTAINER_NAME):dev python /mnt/scripts/train.py
