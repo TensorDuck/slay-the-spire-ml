@@ -20,4 +20,9 @@ streamlit run app.py
 ```
 
 ## Dev TODO
-* Add streamlit docker container for easier deployment
+* Improve model (currently has very poor recommendations)
+* Clean up data
+  * exclude daily challenge games
+  * include relics
+  * include close wins (i.e. getting to act 3)
+* Add picks depending on which act the player is in
