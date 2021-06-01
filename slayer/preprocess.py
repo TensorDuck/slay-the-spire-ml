@@ -10,6 +10,10 @@ def process_card_name(name: str) -> str:
     return name.strip().lower().replace(" ", "_").rstrip("+1")
 
 
+def get_character(record: dict) -> list:
+    return record.get("event").get("character_chosen")  # there are null record
+
+
 def get_cards(record: dict) -> list:
     """read a record and uniform card names"""
     all_cards = []
@@ -22,7 +26,7 @@ def filter_records_by_character(records: list, character: str) -> list:
     """Filter out records for a specific character"""
     specific_records = []
     for record in records:
-        if record["event"]["character_chosen"] == character:
+        if get_character(record) == character:
             specific_records.append(record)
 
     return specific_records
@@ -42,7 +46,7 @@ def get_all_unique_cards(records: list) -> set:
     """Process multiple records and return a matrix of card counts"""
     all_cards = {}
     for dat in records:
-        character = dat.get("event").get("character_chosen")  # there are null records
+        character = get_character(dat)
         if character is None:
             print(dat)
         else:

@@ -4,7 +4,12 @@ import json
 import os
 
 from slayer.globals import RESOURCE_LOCATION
-from slayer.preprocess import filter_records_by_victory, make_resources, get_cards
+from slayer.preprocess import (
+    filter_records_by_victory,
+    make_resources,
+    get_cards,
+    get_character,
+)
 
 if __name__ == "__main__":
     print("starting preprocess_good_decks")
@@ -31,8 +36,14 @@ if __name__ == "__main__":
         if len(all_victory_runs) > 10000:
             break
 
+    simpler_output = []
+    for run in all_victory_runs:
+        simpler_output.append(
+            {"character": get_character(run), "deck_final": get_cards(run)}
+        )
+
     with open(f"{RESOURCE_LOCATION}/victory.json", "w") as f:
-        json.dump(all_victory_runs, f, indent=4)
+        json.dump(simpler_output, f, indent=4)
 
     make_resources(all_victory_runs)
 
