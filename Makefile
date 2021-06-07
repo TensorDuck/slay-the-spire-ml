@@ -1,9 +1,13 @@
-.PHONY: build, start, stop, dev-start, lint, gcp-upload, preprocess, train
+.PHONY: push, build, start, stop, dev-start, lint, gcp-upload, preprocess, train
 
 -include .env
 
 #note, containing grc.io tells docker push what address to push the image to
 CONTAINER_NAME=slay-the-spire-ml
+
+push: build
+	docker tag $(CONTAINER_NAME):latest tensorduck/$(CONTAINER_NAME):latest
+	docker push tensorduck/$(CONTAINER_NAME):latest
 
 build:
 	docker build -f Dockerfile -t $(CONTAINER_NAME):latest .
