@@ -2,8 +2,8 @@
 import os
 
 import numpy as np
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.decomposition import NMF
+from sklearn.preprocessing import OneHotEncoder
 
 from slayer.globals import RESOURCE_LOCATION
 
