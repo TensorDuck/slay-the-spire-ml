@@ -1,0 +1,23 @@
+# Playtest
+
+Overall, did better than I thought it would. Ironclad (no ascension) made it to heart
+but failed to kill the heart using the recommended cards. This demonstrates the power of
+data at the very least.
+
+Below are some specific notes on improvements/changes.
+
+## UI
+* Add 3-4 columns for cards * Simplify text, i.e. "strike number:" -> "strike:"
+* Increase visibility on cards - don't display cards that have a recommendation of 0.
+* Add feature that displays the score of three specific cards - i.e. during the game the
+  player often only has a choice between 3 cards (sometimesmore, but rarely)
+
+## Predictions
+* Add methods for inferring the total number of desired cards. Prevents decks from
+  getting too big
+* Seems like card removal is hard to gauge. I.e. it's hard to figure out if I need to
+  remove the extra strikes or defends.
+* I'm guessing that methods like cosine distances and matrox factorization heavily
+  weight towards whats in the deck. Thus, it typically recommends decks that don't have
+  the card removed. Need to find a way to account for that.
+
