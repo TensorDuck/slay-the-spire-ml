@@ -2,6 +2,7 @@
 import gzip
 import json
 import os
+import time
 
 from slayer.globals import RESOURCE_LOCATION
 from slayer.preprocess import (
@@ -13,6 +14,7 @@ from slayer.preprocess import (
 
 if __name__ == "__main__":
     print("starting preprocess_good_decks")
+    t1 = time.time()
 
     # dir where the raw data is
     data_dir = "data/full/Monthly_2020_11"
@@ -29,11 +31,12 @@ if __name__ == "__main__":
         victory_runs = filter_records_by_victory(data)
         all_victory_runs.extend(victory_runs)
         if idx % 10 == 0:
-            print(len(victory_runs) / len(data))  # fraction of victories
-            print(len(all_victory_runs))  # number of total victors
+            # print(len(victory_runs) / len(data))  # fraction of victories
+            # print(len(all_victory_runs))  # number of total victors
+            pass
 
         # save only the first 10000 for quick testing for now
-        if len(all_victory_runs) > 10000:
+        if idx >= 100:
             break
 
     simpler_output = []
@@ -46,4 +49,8 @@ if __name__ == "__main__":
         json.dump(simpler_output, f, indent=4)
 
     make_resources(all_victory_runs)
+
+    t2 = time.time()
+    print("TIME")
+    print(t2 - t1)
 
