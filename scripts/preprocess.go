@@ -10,17 +10,19 @@ import (
 )
 
 type SlayerFinal struct {
+	/* final data structure for output to JSON*/
 	Master_deck []string `json:"master_deck"`
-	Relics      string   `json:"relics"`
+	Relics      []string `json:"relics"`
 }
 
 type SlayerEvent struct {
+	/* Input data structure to read form JSON*/
 	Event struct {
 		Gold_per_floor    []int    `json:"gold_per_floor"`
 		Floor_reached     int      `json:"floor_reached"`
 		Items_purged      []string `json:"items_purged"`
 		Master_deck       []string `json:"master_deck"`
-		Relics            string   `json:"relics"`
+		Relics            []string `json:"relics"`
 		Is_ascension_mode bool     `json:"is_ascension_mode"`
 		Is_prod           bool     `json:"is_prod"`
 		Is_daily          bool     `json:"is_daily"`
@@ -31,14 +33,17 @@ type SlayerEvent struct {
 }
 
 func (se SlayerEvent) BasicVictory() bool {
-	return se.Event.Victory && !se.Event.Is_ascension_mode && !se.Event.Is_prod && !se.Event.Is_daily && !se.Event.Is_endless
+	/*Return true if this is a victory in the base game and not a special mode*/
+	return se.Event.Victory && !se.Event.Is_prod && !se.Event.Is_daily && !se.Event.Is_endless
 }
 
 func (se SlayerEvent) MapFinal() SlayerFinal {
+	/*Convert the SlayerEvent strcut to the SlayerFinal struct */
 	return SlayerFinal{Master_deck: se.Event.Master_deck, Relics: se.Event.Relics}
 }
 
 func Filter(ses []SlayerEvent) []SlayerFinal {
+	/*Take a sequence of SLayerEvent, filter out losing decks and map to final struct*/
 	var x int = 0
 	var good_results []SlayerFinal
 
