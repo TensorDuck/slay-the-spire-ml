@@ -10,6 +10,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"sync"
 	"time"
 )
 
@@ -66,6 +67,32 @@ func Filter(ses []SlayerEvent) []SlayerFinal {
 	return good_results
 }
 
+func loadJson(fileName string, fileNumber int, rawCount *int, wg *sync.WaitGroup, saveResults *[][]SlayerFinal) {
+	defer wg.Done()
+
+	jsonFileGZ, err := os.Open(fileName)
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		fmt.Println(err)
+	}
+	//fmt.Println("Successfully Opened data")
+
+	// load the JSON, un-compress and unmarshall
+	var results []SlayerEvent
+	jsonFile, err := gzip.NewReader(jsonFileGZ)
+	if err != nil {
+		log.Fatal(err)
+	}
+	byte_value, _ := ioutil.ReadAll(jsonFile)
+
+	json.Unmarshal([]byte(byte_value), &results)
+	jsonFile.Close()
+
+	// filter results by victory condition and save
+	(*saveResults)[fileNumber] = Filter(results)
+	(*rawCount) += len(results)
+}
+
 func main() {
 	flag.Parse()
 	if *cpuprofile != "" {
@@ -80,7 +107,11 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	// initialize variables
 	start := time.Now()
+	var startCount, finalCount int
+	var wg sync.WaitGroup
+
 	// get all json files that need to be loaded and parsed
 	data_dir := "data/full/Monthly_2020_11"
 	files, err := os.ReadDir(data_dir)
@@ -89,41 +120,29 @@ func main() {
 	}
 	//fmt.Println(len(files))
 
-	var good_results []SlayerFinal
-	var start_count, final_count int
+	//nFiles := len(files)
+	nFiles := 100
+	good_results := make([][]SlayerFinal, nFiles)
 
-	for idx := 0; idx < 100; idx++ {
-		f := files[idx]
-		// Open our jsonFile
-		jsonFileGZ, err := os.Open(data_dir + "/" + f.Name())
-		// if we os.Open returns an error then handle it
-		if err != nil {
-			fmt.Println(err)
-		}
-		//fmt.Println("Successfully Opened data")
+	// Open all jsonFiles with concurrency
+	for idx := 0; idx < nFiles; idx++ {
+		wg.Add(1)
+		go loadJson(data_dir+"/"+files[idx].Name(), idx, &startCount, &wg, &good_results)
+	}
+	wg.Wait()
 
-		// load the JSON, un-compress and unmarshall
-		var results []SlayerEvent
-		jsonFile, err := gzip.NewReader(jsonFileGZ)
-		if err != nil {
-			log.Fatal(err)
-		}
-		byte_value, _ := ioutil.ReadAll(jsonFile)
-
-		json.Unmarshal([]byte(byte_value), &results)
-		jsonFile.Close()
-
-		// filter results to a single
-		filtered := Filter(results)
-		for _, filt := range filtered {
-			good_results = append(good_results, filt)
-		}
-
-		// keep track of size of things
-		start_count += len(results)
-		final_count += len(filtered)
-		if idx%10 == 0 {
-			//fmt.Println(float32(final_count) / float32(start_count))
+	// Flatten all collected JSON files
+	// count how many JSON elements to save
+	for idx := 0; idx < len(good_results); idx++ {
+		finalCount += len(good_results[idx])
+	}
+	finalResults := make([]SlayerFinal, finalCount)
+	// now add all the  good results to the final results
+	finalIdx := 0
+	for idx := 0; idx < len(good_results); idx++ {
+		for _, val := range good_results[idx] {
+			finalResults[finalIdx] = val
+			finalIdx += 1
 		}
 	}
 
@@ -133,10 +152,12 @@ func main() {
 	end := time.Now()
 
 	elapsed := end.Sub(start)
-	fmt.Println(final_count)
-	fmt.Println(start_count)
+	fmt.Println(startCount)
+	fmt.Println(finalCount)
+	fmt.Println(float32(finalCount) / float32(startCount))
 	fmt.Println(elapsed)
 
+	// save memory profile file
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)
 		if err != nil {
