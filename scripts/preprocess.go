@@ -3,11 +3,18 @@ package main
 import (
 	"compress/gzip"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
+	"runtime/pprof"
+	"time"
 )
+
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
+var memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 
 type SlayerFinal struct {
 	/* final data structure for output to JSON*/
@@ -60,18 +67,32 @@ func Filter(ses []SlayerEvent) []SlayerFinal {
 }
 
 func main() {
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer f.Close() // error handling omitted for example
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
+	start := time.Now()
 	// get all json files that need to be loaded and parsed
 	data_dir := "data/full/Monthly_2020_11"
 	files, err := os.ReadDir(data_dir)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(len(files))
+	//fmt.Println(len(files))
 
 	var good_results []SlayerFinal
 	var start_count, final_count int
 
-	for idx := 0; idx < 10; idx++ {
+	for idx := 0; idx < 100; idx++ {
 		f := files[idx]
 		// Open our jsonFile
 		jsonFileGZ, err := os.Open(data_dir + "/" + f.Name())
@@ -102,42 +123,30 @@ func main() {
 		start_count += len(results)
 		final_count += len(filtered)
 		if idx%10 == 0 {
-			fmt.Println(float32(final_count) / float32(start_count))
+			//fmt.Println(float32(final_count) / float32(start_count))
 		}
 	}
 
 	good_bytes, err := json.MarshalIndent(good_results, "", "    ")
 	os.WriteFile("data/victory.json", good_bytes, 0700)
+
+	end := time.Now()
+
+	elapsed := end.Sub(start)
 	fmt.Println(final_count)
 	fmt.Println(start_count)
+	fmt.Println(elapsed)
 
-}
-
-func test() {
-	// Open our jsonFile
-	jsonFile, err := os.Open("data/2018-10-25-02-34#1352.json")
-	// if we os.Open returns an error then handle it
-	if err != nil {
-		fmt.Println(err)
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatal("could not create memory profile: ", err)
+		}
+		defer f.Close() // error handling omitted for example
+		runtime.GC()    // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatal("could not write memory profile: ", err)
+		}
 	}
-	fmt.Println("Successfully Opened data")
-	// defer the closing of our jsonFile so that we can parse it later on
-	defer jsonFile.Close()
 
-	byte_value, _ := ioutil.ReadAll(jsonFile)
-
-	var results []SlayerEvent
-	json.Unmarshal([]byte(byte_value), &results)
-	fmt.Println(results[0].Event.Master_deck)
-	fmt.Println(results[0])
-
-	good_results := Filter(results)
-
-	fmt.Println(float64(len(good_results)) / float64(len(results)))
-
-	files, err := os.ReadDir("data/full/Monthly_2020_11")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(len(files))
 }
