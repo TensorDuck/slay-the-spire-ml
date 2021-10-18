@@ -19,8 +19,9 @@ var memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 
 type SlayerFinal struct {
 	/* final data structure for output to JSON*/
-	Master_deck []string `json:"master_deck"`
-	Relics      []string `json:"relics"`
+	Master_deck    []string `json:"master_deck"`
+	Relics         []string `json:"relics"`
+	AscensionLevel int      `json:"ascension_level"`
 }
 
 type SlayerEvent struct {
@@ -47,7 +48,7 @@ func (se SlayerEvent) BasicVictory() bool {
 
 func (se SlayerEvent) MapFinal() SlayerFinal {
 	/*Convert the SlayerEvent strcut to the SlayerFinal struct */
-	return SlayerFinal{Master_deck: se.Event.Master_deck, Relics: se.Event.Relics}
+	return SlayerFinal{Master_deck: se.Event.Master_deck, Relics: se.Event.Relics, AscensionLevel: se.Event.Ascension_level}
 }
 
 func Filter(ses []SlayerEvent) []SlayerFinal {
@@ -67,9 +68,9 @@ func Filter(ses []SlayerEvent) []SlayerFinal {
 	return good_results
 }
 
-func loadJson(fileName string, fileNumber int, rawCount *int, wg *sync.WaitGroup, saveResults *[][]SlayerFinal) {
+func loadJson(fileName string, fileNumber int, rawCount *int, wg *sync.WaitGroup, saveResults *[][]SlayerFinal, ch <-chan bool) {
 	defer wg.Done()
-
+	defer func() { <-ch }()
 	jsonFileGZ, err := os.Open(fileName)
 	// if we os.Open returns an error then handle it
 	if err != nil {
@@ -87,6 +88,7 @@ func loadJson(fileName string, fileNumber int, rawCount *int, wg *sync.WaitGroup
 
 	json.Unmarshal([]byte(byte_value), &results)
 	jsonFile.Close()
+	jsonFileGZ.Close()
 
 	// filter results by victory condition and save
 	(*saveResults)[fileNumber] = Filter(results)
@@ -120,14 +122,16 @@ func main() {
 	}
 	//fmt.Println(len(files))
 
-	//nFiles := len(files)
-	nFiles := 100
+	nFiles := len(files)
 	good_results := make([][]SlayerFinal, nFiles)
 
 	// Open all jsonFiles with concurrency
+	max_concurrency := 16
+	sem := make(chan bool, max_concurrency)
 	for idx := 0; idx < nFiles; idx++ {
 		wg.Add(1)
-		go loadJson(data_dir+"/"+files[idx].Name(), idx, &startCount, &wg, &good_results)
+		sem <- true
+		go loadJson(data_dir+"/"+files[idx].Name(), idx, &startCount, &wg, &good_results, sem)
 	}
 	wg.Wait()
 
@@ -146,7 +150,7 @@ func main() {
 		}
 	}
 
-	good_bytes, err := json.MarshalIndent(good_results, "", "    ")
+	good_bytes, err := json.MarshalIndent(finalResults, "", "    ")
 	os.WriteFile("data/victory.json", good_bytes, 0700)
 
 	end := time.Now()
