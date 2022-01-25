@@ -8,3 +8,7 @@ notebooks/
 # go debug and compiled scripts
 cpu*
 preprocess
+
+# don't save data files
+slayer/resources/*.json
+

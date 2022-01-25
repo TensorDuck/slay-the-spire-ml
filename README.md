@@ -24,6 +24,11 @@ streamlit run app.py
 I used Go1.16.5 for running the scripts.
 Later versions of Go should also work, but it is not tested.
 
+The Go script is about x8 faster than the Python script.
+Thus, Go is very convenient for rapid experimentation.
+However, there are many gotchas for reading JSON in Go.
+Thus, it's probably easier for most users to rely on the Python script.
+
 ## Dev TODO
 * Improve model (currently has very poor recommendations)
 * Clean up data

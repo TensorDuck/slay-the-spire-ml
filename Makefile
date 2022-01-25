@@ -29,7 +29,7 @@ lint:
 	isort slayer
 
 preprocess: build-dev
-	docker run --rm --name $(CONTAINER_NAME)_script -v $(PWD):/mnt -t $(CONTAINER_NAME):dev python /mnt/scripts/preprocess_good_decks.py
+	docker run --rm --name $(CONTAINER_NAME)_script -v $(PWD):/mnt -t $(CONTAINER_NAME):dev python /mnt/scripts/preprocess.py
 
 train: build-dev
 	docker run --rm --name $(CONTAINER_NAME)_script -v $(PWD):/mnt -t $(CONTAINER_NAME):dev python /mnt/scripts/train.py
