@@ -33,3 +33,6 @@ preprocess: build-dev
 
 train: build-dev
 	docker run --rm --name $(CONTAINER_NAME)_script -v $(PWD):/mnt -t $(CONTAINER_NAME):dev python /mnt/scripts/train.py
+
+preprocess-go:
+	go run scripts/preprocess.go -cpuprofile cpu.profn

@@ -22,11 +22,14 @@ type SlayerFinal struct {
 	Master_deck    []string `json:"master_deck"`
 	Relics         []string `json:"relics"`
 	AscensionLevel int      `json:"ascension_level"`
+	Victory        bool     `json:"victory"`
+	Character      []string `json:"character"`
 }
 
 type SlayerEvent struct {
 	/* Input data structure to read form JSON*/
 	Event struct {
+		Character_chosen  []string `json:"character_chosen"`
 		Gold_per_floor    []int    `json:"gold_per_floor"`
 		Floor_reached     int      `json:"floor_reached"`
 		Items_purged      []string `json:"items_purged"`
@@ -41,23 +44,40 @@ type SlayerEvent struct {
 	} `json:"event"`
 }
 
+func (se SlayerEvent) IsNormal() bool {
+	/*Return true if this is a normal game, false otherwise*/
+	return !se.Event.Is_prod && !se.Event.Is_daily && !se.Event.Is_endless
+}
+
 func (se SlayerEvent) BasicVictory() bool {
 	/*Return true if this is a victory in the base game and not a special mode*/
-	return se.Event.Victory && !se.Event.Is_prod && !se.Event.Is_daily && !se.Event.Is_endless
+	return se.Event.Victory && se.IsNormal()
+}
+
+func (se SlayerEvent) HighAscension() bool {
+	/*Return true if this is a game at a high ascension, otherwise return false*/
+	return se.IsNormal() && (se.Event.Ascension_level > 19)
 }
 
 func (se SlayerEvent) MapFinal() SlayerFinal {
 	/*Convert the SlayerEvent strcut to the SlayerFinal struct */
-	return SlayerFinal{Master_deck: se.Event.Master_deck, Relics: se.Event.Relics, AscensionLevel: se.Event.Ascension_level}
+	return SlayerFinal{
+		Master_deck:    se.Event.Master_deck,
+		Relics:         se.Event.Relics,
+		AscensionLevel: se.Event.Ascension_level,
+		Victory:        se.Event.Victory,
+		Character:      se.Event.Character_chosen,
+	}
 }
 
+// Control which Filter function to use here
 func Filter(ses []SlayerEvent) []SlayerFinal {
 	/*Take a sequence of SLayerEvent, filter out losing decks and map to final struct*/
 	var x int = 0
 	var good_results []SlayerFinal
 
 	for _, s := range ses {
-		if s.BasicVictory() {
+		if s.HighAscension() {
 			x += 1
 			good_results = append(good_results, s.MapFinal())
 		}
@@ -97,6 +117,7 @@ func loadJson(fileName string, fileNumber int, rawCount *int, wg *sync.WaitGroup
 
 func main() {
 	flag.Parse()
+	// code for profiling CPU and memory usage
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -151,7 +172,8 @@ func main() {
 	}
 
 	good_bytes, err := json.MarshalIndent(finalResults, "", "    ")
-	os.WriteFile("data/victory.json", good_bytes, 0700)
+	// can edit the file name to save with here
+	os.WriteFile("data/good_players.json", good_bytes, 0700)
 
 	end := time.Now()
 

@@ -4,3 +4,7 @@
 # directories should not be saved
 data/
 notebooks/
+
+# go debug and compiled scripts
+cpu*
+preprocess

@@ -19,6 +19,11 @@ The intention is to access the dashboard from the streamlit app. This can be don
 streamlit run app.py
 ```
 
+### Running Go Scripts
+
+I used Go1.16.5 for running the scripts.
+Later versions of Go should also work, but it is not tested.
+
 ## Dev TODO
 * Improve model (currently has very poor recommendations)
 * Clean up data
@@ -26,3 +31,5 @@ streamlit run app.py
   * include relics
   * include close wins (i.e. getting to act 3)
 * Add picks depending on which act the player is in
+* Also include aggregate pathing information - i.e. target paths
+*
